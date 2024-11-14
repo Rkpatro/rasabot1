@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  rasa:
+    image: rasa/rasa:latest
+    container_name: rasa_server
+    ports:
+      - "5005:5005"  # Expose Rasa server on port 5005
+    volumes:
+      - ./:/app       # Mount the project directory to the container
+    #command: ["rasa","shell"]
+    command: >
+      shell --debug 
+    depends_on:
+      - action_server  # Wait for the action server to be ready
+
+  action_server:
+    image: rasa/rasa-sdk:latest
+    container_name: rasa_action_server
+    ports:
+      - "5055:5055"  # Expose the action server on port 5055
+    volumes:
+      - ./actions:/app/actions  # Mount the actions directory
+    command: ["rasa-sdk", "run", "actions"]
+    
+  heyoo:
+    build:
+      context: ./heyoo_env
+    container_name: heyoo_server
+    environment:
+      - HEYOO_TOKEN=your_whatsapp_token_here
+      - WHATSAPP_PHONE_ID=your_phone_id_here
+      - VERIFY_TOKEN=your_verify_token_here
+    ports:
+      - "5006:5006"  
+      
+  db:
+    image: postgres:13         # PostgreSQL image version
+    environment:
+      POSTGRES_DB: "berrydata"      # Database name
+      POSTGRES_USER: "rkpatro" # Database username
+      POSTGRES_PASSWORD: "1234" # Database password
+    ports:
+      - "5433:5432"            # Map port 5433 on the host to port 5432 in the container
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persist data on a Docker volume
+
+volumes:
+  postgres_data:               # Volume to persist PostgreSQL data    
